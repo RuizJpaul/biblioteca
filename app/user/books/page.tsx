@@ -138,7 +138,7 @@ export default function UserBooksPage() {
                       className="object-cover"
                     />
                   ) : (
-                    <span>📖</span>
+                    <span></span>
                   )}
                 </div>
                 <CardContent className="pt-4">

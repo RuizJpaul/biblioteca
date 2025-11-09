@@ -33,10 +33,7 @@ export function UserNavbar({ userName }: UserNavbarProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href="/user" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold">📚</span>
-            </div>
-            <span className="font-bold text-lg hidden sm:inline">BookExchange</span>
+            <span className="font-bold text-lg hidden sm:inline">BOOKING</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8">

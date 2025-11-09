@@ -3,7 +3,7 @@ import Link from "next/link"
 
 export function HeroSection() {
   return (
-    <section className="py-16 md:py-24">
+    <section className="py-16 md:py-24 bg-[#f2d5a6]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div>
@@ -14,7 +14,13 @@ export function HeroSection() {
             </p>
             <div className="flex gap-4 flex-wrap">
               <Link href="/books">
-                <Button size="lg">Explorar Libros</Button>
+                <Button
+                  size="lg"
+                  variant="default"
+                  className="bg-black text-white hover:bg-gray-800 transition-colors"
+                >
+                  Explorar Libros
+                </Button>
               </Link>
               <Link href="/register">
                 <Button size="lg" variant="outline">
@@ -24,7 +30,7 @@ export function HeroSection() {
             </div>
           </div>
           <div className="bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg h-80 flex items-center justify-center">
-            <div className="text-6xl">📚</div>
+            <img src="/fondo.png" alt="" />
           </div>
         </div>
       </div>

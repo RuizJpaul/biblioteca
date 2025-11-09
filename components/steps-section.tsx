@@ -32,7 +32,7 @@ export function StepsSection() {
           {steps.map((step) => (
             <Card key={step.number}>
               <CardHeader>
-                <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold mb-4">
+                <div className="w-10 h-10 bg-black text-primary-foreground rounded-full flex items-center justify-center font-bold mb-4">
                   {step.number}
                 </div>
                 <CardTitle>{step.title}</CardTitle>

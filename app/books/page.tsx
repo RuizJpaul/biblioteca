@@ -122,7 +122,7 @@ export default function BooksPage() {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <span className="text-5xl">📖</span>
+                            <span className="text-5xl"></span>
                           )}
 
                           {isOwn && (

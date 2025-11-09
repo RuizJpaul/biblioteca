@@ -46,7 +46,7 @@ export function CategoriesSection() {
             cats.map((category) => (
               <Card key={category.genero} className="hover:shadow-lg transition cursor-pointer">
                 <CardContent className="pt-6 text-center">
-                  <p className="text-3xl mb-2">📚</p>
+                  <p className="text-3xl mb-2"></p>
                   <p className="font-semibold text-sm">{category.genero}</p>
                   <p className="text-xs text-muted-foreground mt-1">{category.count} libros</p>
                 </CardContent>
