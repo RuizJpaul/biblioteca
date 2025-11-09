@@ -10,12 +10,8 @@ function normalizeRows(res: any) {
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = params
-    const idNum = Number.parseInt(String(id), 10)
-    if (Number.isNaN(idNum)) {
-      return NextResponse.json({ error: "Invalid user id" }, { status: 400 })
-    }
     const sql = getDb()
-    const result = await sql`SELECT * FROM usuario WHERE idUsuario = ${idNum}`
+    const result = await sql`SELECT * FROM usuario WHERE idUsuario = ${Number.parseInt(id)}`
     const rows = normalizeRows(result)
     return NextResponse.json(rows[0] ?? null)
   } catch (error) {
@@ -27,10 +23,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = params
-    const idNum = Number.parseInt(String(id), 10)
-    if (Number.isNaN(idNum)) {
-      return NextResponse.json({ error: "Invalid user id" }, { status: 400 })
-    }
     const body = await request.json()
     const sql = getDb()
 
@@ -45,10 +37,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     await sql`
       UPDATE usuario SET nombre = ${body.nombre}, apellido = ${body.apellido}, telefono = ${body.telefono ?? null}, direccion = ${body.direccion ?? null}
-      WHERE idUsuario = ${idNum}
+      WHERE idUsuario = ${Number.parseInt(id)}
     `
 
-    const updatedResult = await sql`SELECT * FROM usuario WHERE idUsuario = ${idNum}`
+    const updatedResult = await sql`SELECT * FROM usuario WHERE idUsuario = ${Number.parseInt(id)}`
     const updatedRows = normalizeRows(updatedResult)
     return NextResponse.json(updatedRows[0] ?? null)
   } catch (error: any) {
@@ -62,12 +54,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = params
-    const idNum = Number.parseInt(String(id), 10)
-    if (Number.isNaN(idNum)) {
-      return NextResponse.json({ error: "Invalid user id" }, { status: 400 })
-    }
     const sql = getDb()
-    await sql`DELETE FROM usuario WHERE idUsuario = ${idNum}`
+    await sql`DELETE FROM usuario WHERE idUsuario = ${Number.parseInt(id)}`
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("[api/users/[id]] DELETE Error:", error)

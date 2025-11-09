@@ -35,7 +35,7 @@ export function AdminNavbar({ userName }: AdminNavbarProps) {
         <div className="flex justify-between items-center h-16">
           <Link href="/admin" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary-foreground rounded-lg flex items-center justify-center">
-              <span className="text-primary font-bold">⚙️</span>
+              <span className="text-primary font-bold"></span>
             </div>
             <span className="font-bold text-lg text-primary-foreground">Admin</span>
           </Link>
