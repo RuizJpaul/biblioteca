@@ -92,16 +92,39 @@ export default function MyBooksPage() {
   }, [user, loading, router])
 
   const handleDelete = async (bookId: number) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar este libro? Esta acción no se puede deshacer.")) {
+      return
+    }
+
     try {
+      const uid = (user as any).idUsuario ?? (user as any).idusuario
+      if (!uid) {
+        console.error("Missing user id, cannot delete book")
+        return
+      }
+
       const response = await fetch(`/api/books/${bookId}`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idUsuario: uid }),
       })
-      if (!response.ok) throw new Error("Failed to delete book")
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Error desconocido" }))
+        alert(`Error al eliminar el libro: ${errorData.error}`)
+        throw new Error("Failed to delete book")
+      }
+      
       setBooks(books.filter((b) => b.idLibro !== bookId))
       setSelectedBook(null)
+      alert("Libro eliminado exitosamente")
     } catch (error) {
       console.error("[v0] Error deleting book:", error)
     }
+  }
+
+  const handleEdit = (bookId: number) => {
+    router.push(`/user/my-books/edit/${bookId}`)
   }
 
   if (!user) return <div className="flex items-center justify-center h-screen">Cargando...</div>
@@ -193,7 +216,9 @@ export default function MyBooksPage() {
                     Estado: {selectedBook.estado}
                   </p>
                   <div className="flex gap-2">
-                    <Button className="flex-1">Editar</Button>
+                    <Button onClick={() => handleEdit(selectedBook.idLibro)} className="flex-1">
+                      Editar
+                    </Button>
                     <Button variant="destructive" onClick={() => handleDelete(selectedBook.idLibro)} className="flex-1">
                       Eliminar
                     </Button>
