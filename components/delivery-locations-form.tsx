@@ -37,11 +37,19 @@ export function DeliveryLocationsForm({ userId }: DeliveryLocationsFormProps) {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    fetchLocations()
+    if (userId && !isNaN(userId)) {
+      fetchLocations()
+    }
   }, [userId])
 
   const fetchLocations = async () => {
     try {
+      if (!userId || isNaN(userId)) {
+        console.warn('Invalid userId:', userId)
+        setLocations([])
+        return
+      }
+
       const res = await fetch(`/api/puntos-entrega?userId=${userId}`)
       if (!res.ok) {
         const body = await res.text().catch(() => "<no body>")

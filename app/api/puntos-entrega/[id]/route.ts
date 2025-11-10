@@ -2,10 +2,10 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getDb } from "@/lib/db"
 
 // PUT actualizar punto de entrega
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { nombre, direccion, ciudad, provincia, codigo_postal, referencia, es_predeterminado } = await req.json()
-    const { id } = params
+    const { id } = await params
 
     // Si es predeterminado, desmarcar otros
     const sql = getDb()
@@ -30,9 +30,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 // DELETE eliminar punto de entrega
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params
+    const { id } = await params
     const sql = getDb()
     await sql`DELETE FROM punto_entrega WHERE idPuntoEntrega = ${id}`
 

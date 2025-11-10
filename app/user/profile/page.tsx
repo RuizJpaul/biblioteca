@@ -85,6 +85,15 @@ export default function ProfilePage() {
   const handleSave = () => {
     ;(async () => {
       try {
+        // Obtener el ID del usuario (normalizar idUsuario/idusuario)
+        const userId = user.idUsuario ?? user.idusuario
+        
+        if (!userId) {
+          console.error('Missing user ID, cannot update profile')
+          alert('Error: No se pudo identificar el usuario')
+          return
+        }
+
         // Validate phone number
         let phoneNumber = null;
         if (formData.telefono && formData.telefono.trim() !== '') {
@@ -95,9 +104,9 @@ export default function ProfilePage() {
           }
         }
 
-        console.log('Sending phone number:', phoneNumber); // Debug log
+        console.log('Updating user:', userId, 'with phone:', phoneNumber); // Debug log
 
-        const resp = await fetch(`/api/users/${user.idUsuario}`, {
+        const resp = await fetch(`/api/users/${userId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -229,7 +238,7 @@ export default function ProfilePage() {
           </Card>
 
           <div className="mt-8">
-            <DeliveryLocationsForm userId={user.idUsuario} />
+            <DeliveryLocationsForm userId={user.idUsuario ?? user.idusuario} />
           </div>
         </div>
       </main>

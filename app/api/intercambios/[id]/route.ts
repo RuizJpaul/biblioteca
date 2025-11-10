@@ -1,19 +1,28 @@
 import { getDb } from "@/lib/db"
 import { type NextRequest, NextResponse } from "next/server"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+function normalizeRows(res: any): any[] {
+  if (Array.isArray(res)) return res
+  if (res && Array.isArray(res.rows)) return res.rows
+  return []
+}
+
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const sql = getDb()
-    const exchange = await sql(
-      `SELECT i.*, 
+    const exchangeId = Number.parseInt(id)
+    const result = await sql`
+      SELECT i.*, 
         lo.titulo as libro_ofrecido_titulo,
         lr.titulo as libro_recibido_titulo
       FROM intercambio i
       JOIN libro lo ON i.libro_ofrecido_id = lo.idLibro
       JOIN libro lr ON i.libro_recibido_id = lr.idLibro
-      WHERE i.idIntercambio = $1`,
-      [Number.parseInt(params.id)],
-    )
+      WHERE i.idIntercambio = ${exchangeId}
+    `
+    
+    const exchange = normalizeRows(result)
 
     if (exchange.length === 0) {
       return NextResponse.json({ error: "Intercambio no encontrado" }, { status: 404 })
@@ -26,15 +35,21 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const { estado } = await request.json()
     const sql = getDb()
+    const exchangeId = Number.parseInt(id)
 
-    const result = await sql("UPDATE intercambio SET estado = $1 WHERE idIntercambio = $2 RETURNING *", [
-      estado,
-      Number.parseInt(params.id),
-    ])
+    const queryResult = await sql`
+      UPDATE intercambio 
+      SET estado = ${estado} 
+      WHERE idIntercambio = ${exchangeId} 
+      RETURNING *
+    `
+    
+    const result = normalizeRows(queryResult)
 
     if (result.length === 0) {
       return NextResponse.json({ error: "Intercambio no encontrado" }, { status: 404 })

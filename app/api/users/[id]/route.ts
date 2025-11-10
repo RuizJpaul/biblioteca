@@ -7,9 +7,9 @@ function normalizeRows(res: any) {
   return []
 }
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params
+    const { id } = await params
     const sql = getDb()
     const result = await sql`SELECT * FROM usuario WHERE idUsuario = ${Number.parseInt(id)}`
     const rows = normalizeRows(result)
@@ -20,9 +20,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const sql = getDb()
 
@@ -61,9 +61,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params
+    const { id } = await params
     const sql = getDb()
     await sql`DELETE FROM usuario WHERE idUsuario = ${Number.parseInt(id)}`
     return NextResponse.json({ success: true })

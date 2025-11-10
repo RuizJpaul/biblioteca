@@ -1,11 +1,12 @@
 import { getDb } from "@/lib/db"
 import { type NextRequest, NextResponse } from "next/server"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: paramId } = await params
     const sql = getDb()
-    let id = Number.parseInt(String(params?.id ?? ""))
-    console.log('[api] GET /api/users/:id/books params =>', params, 'parsed id =>', id)
+    let id = Number.parseInt(String(paramId ?? ""))
+    console.log('[api] GET /api/users/:id/books paramId =>', paramId, 'parsed id =>', id)
 
     // Fallback: try to extract numeric id from URL path if params.id wasn't valid
     if (!id || Number.isNaN(id)) {

@@ -4,10 +4,15 @@ import { getDb } from "@/lib/db"
 // GET todos los puntos de entrega del usuario
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.nextUrl.searchParams.get("userId")
+    const userIdParam = req.nextUrl.searchParams.get("userId")
 
-    if (!userId) {
+    if (!userIdParam) {
       return NextResponse.json({ error: "userId requerido" }, { status: 400 })
+    }
+
+    const userId = Number.parseInt(userIdParam)
+    if (isNaN(userId)) {
+      return NextResponse.json({ error: "userId inválido" }, { status: 400 })
     }
 
     const sql = getDb()
