@@ -7,11 +7,62 @@ function normalizeRows(res: any): any[] {
   return []
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const sql = getDb()
-    const result = await sql`SELECT l.*, u.nombre as usuario_nombre FROM libro l JOIN usuario u ON l.idUsuario = u.idUsuario ORDER BY l.fecha_creacion DESC`
+    const auth = request.cookies.get('auth')?.value
+    let userId = null
+    
+    if (auth) {
+      try {
+        const decoded = JSON.parse(Buffer.from(auth, 'base64').toString())
+        userId = decoded.idUsuario
+      } catch (e) {
+        console.error('Error decoding auth cookie:', e)
+      }
+    }
+
+    // Construir la consulta: si hay usuario autenticado, incluir sus libros además de los disponibles
+    const base = sql`
+      SELECT 
+        l.idLibro,
+        l.titulo,
+        l.autor,
+        l.anio,
+        l.descripcion,
+        l.editorial,
+        l.genero,
+        l.img_url,
+        l.estado,
+        l.idUsuario,
+        l.fecha_creacion,
+        u.nombre as usuario_nombre,
+        u.apellido as usuario_apellido
+      FROM libro l 
+      JOIN usuario u ON l.idUsuario = u.idUsuario 
+    `
+
+    let result
+    if (userId) {
+      // Mostrar libros que están disponibles O que pertenecen al usuario autenticado
+      result = await sql`
+        ${base}
+        WHERE (l.estado = 'disponible' OR l.idUsuario = ${userId})
+        ORDER BY l.fecha_creacion DESC
+      `
+    } else {
+      // Usuario no autenticado: solo libros disponibles
+      result = await sql`
+        ${base}
+        WHERE l.estado = 'disponible'
+        ORDER BY l.fecha_creacion DESC
+      `
+    }
+    console.log('Query result:', result) // Para depuración
+
     const books = normalizeRows(result)
+    console.log('Normalized books:', books) // Para depuración
+    
     return NextResponse.json(books)
   } catch (error) {
     console.error("Error fetching books:", error)

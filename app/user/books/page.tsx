@@ -9,6 +9,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { isAdmin } from "@/lib/role"
 import Image from "next/image"
+import { ExchangeModal } from "@/components/exchange-modal"
 
 interface Book {
   idLibro?: number
@@ -20,6 +21,8 @@ interface Book {
   idUsuario: number
   nombre?: string
   apellido?: string
+  anio?: number
+  usuario_nombre?: string
 }
 
 export default function UserBooksPage() {
@@ -64,15 +67,34 @@ export default function UserBooksPage() {
     }
   }, [router])
 
-  // --- Cargar libros del servidor
+  // --- Cargar libros del servidor (catálogo + mis libros cuando estoy autenticado)
   useEffect(() => {
     if (!user) return
     const fetchBooks = async () => {
       try {
-        const response = await fetch("/api/books")
+        // Pedir el catálogo; el endpoint /api/books devuelve disponibles + mis libros si hay cookie
+        const response = await fetch(`/api/books`, {
+          credentials: "include",
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+        })
         if (!response.ok) throw new Error("Failed to fetch books")
         const data = await response.json()
-        setBooks(data)
+
+        const normalized = (Array.isArray(data) ? data : []).map((b: any) => ({
+          idLibro: b.idLibro ?? b.idlibro ?? b.id,
+          titulo: b.titulo ?? "",
+          autor: b.autor ?? "",
+          genero: b.genero ?? "",
+          img_url: b.img_url,
+          estado: b.estado ?? "disponible",
+          idUsuario: b.idUsuario ?? b.idusuario ?? null,
+          nombre: b.usuario_nombre ?? b.nombre ?? "",
+          apellido: b.usuario_apellido ?? b.apellido ?? "",
+          descripcion: b.descripcion ?? "",
+        }))
+
+        setBooks(normalized)
       } catch (error) {
         console.error("Error fetching books:", error)
       } finally {
@@ -123,68 +145,89 @@ export default function UserBooksPage() {
 
           {/* Listado de libros */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredBooks.map((book, index) => (
-              <Card
-                key={`book-${book.idLibro ?? `${book.titulo}-${index}`}`}
-                className="hover:shadow-lg transition overflow-hidden cursor-pointer"
-                onClick={() => setSelectedBook(book)}
-              >
-                <div className="h-40 bg-secondary/20 flex items-center justify-center text-5xl relative overflow-hidden">
-                  {book.img_url ? (
-                    <Image
-                      src={book.img_url || "/placeholder.svg"}
-                      alt={book.titulo}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <span></span>
-                  )}
-                </div>
-                <CardContent className="pt-4">
-                  <h3 className="font-semibold text-sm mb-1 truncate">{book.titulo}</h3>
-                  <p className="text-xs text-muted-foreground mb-2">{book.autor}</p>
-                  <p className="text-xs text-primary mb-2">{book.genero}</p>
-                  <Button size="sm" className="w-full">
-                    Ver
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+            {filteredBooks.length > 0 ? (
+              filteredBooks.map((book, index) => {
+                const currentUid = user?.idUsuario ?? null
+                const isOwn = !!currentUid && book.idUsuario === currentUid
+
+                return (
+                  <Card
+                    key={`book-${book.idLibro ?? `${book.titulo}-${index}`}`}
+                    className={`transition overflow-hidden ${isOwn ? "bg-muted/50 border-primary" : "hover:shadow-lg"}`}
+                    onClick={() => setSelectedBook(book)}
+                  >
+                    <div className="h-40 bg-secondary/20 flex items-center justify-center relative overflow-hidden">
+                      {book.img_url ? (
+                        <Image src={book.img_url || "/placeholder.svg"} alt={book.titulo} fill className="object-cover" />
+                      ) : (
+                        <span className="text-5xl"></span>
+                      )}
+
+                      {isOwn && (
+                        <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
+                          <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
+                            Mi libro
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <CardContent className="pt-4">
+                      <h3 className="font-semibold text-lg mb-1">{book.titulo || "Título desconocido"}</h3>
+                      <p className="text-sm text-muted-foreground">{book.autor}</p>
+                      <p className="text-xs text-primary mt-2">{book.genero || "Sin género"}</p>
+                      <p className="text-xs text-muted-foreground mt-2">Por: {book.nombre || book.usuario_nombre || "Usuario desconocido"}</p>
+                      {book.anio && <p className="text-xs text-muted-foreground">Año: {book.anio}</p>}
+                      {!isOwn && (
+                        <Button className="w-full mt-4" onClick={() => setSelectedBook(book)}>
+                          Proponer Intercambio
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                )
+              })
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <p className="text-muted-foreground">No se encontraron libros</p>
+              </div>
+            )}
           </div>
 
-          {/* Modal de detalle */}
-          {selectedBook && (
-            <div
-              className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-              onClick={() => setSelectedBook(null)}
-            >
-              <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-                <CardContent className="pt-6">
-                  <div className="h-48 bg-secondary/20 flex items-center justify-center text-6xl mb-4 rounded relative overflow-hidden">
-                    {selectedBook.img_url ? (
-                      <Image
-                        src={selectedBook.img_url || "/placeholder.svg"}
-                        alt={selectedBook.titulo}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <span>📖</span>
-                    )}
-                  </div>
-                  <h2 className="text-2xl font-bold mb-2">{selectedBook.titulo}</h2>
-                  <p className="text-muted-foreground mb-1">{selectedBook.autor}</p>
-                  <p className="text-sm text-primary mb-4">{selectedBook.genero}</p>
-                  <div className="flex gap-2">
-                    <Button className="flex-1">Intercambiar</Button>
-                    <Button variant="outline" onClick={() => setSelectedBook(null)} className="flex-1">
-                      Cerrar
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+          {/* Modal de detalle / Proponer intercambio */}
+          {selectedBook && user && (
+            <ExchangeModal
+              bookId={selectedBook.idLibro!}
+              bookTitle={selectedBook.titulo}
+              bookAuthor={selectedBook.autor}
+              userName={selectedBook.nombre || 'Usuario'}
+              userId={selectedBook.idUsuario || 0}
+              onClose={() => setSelectedBook(null)}
+              onPropose={async (myBookId) => {
+                try {
+                  const response = await fetch('/api/intercambios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      libro_ofrecido_id: myBookId,
+                      libro_recibido_id: selectedBook.idLibro,
+                      usuario_origen_id: user.idUsuario,
+                      usuario_destino_id: selectedBook.idUsuario || 0,
+                    }),
+                  })
+
+                  if (response.ok) {
+                    alert('¡Intercambio propuesto exitosamente!')
+                    setSelectedBook(null)
+                  } else {
+                    const error = await response.json().catch(() => ({ error: 'Error' }))
+                    alert(error.error || 'Error al proponer el intercambio')
+                  }
+                } catch (err) {
+                  console.error('Error:', err)
+                  alert('Error al proponer el intercambio')
+                }
+              }}
+            />
           )}
         </div>
       </main>

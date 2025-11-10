@@ -22,6 +22,12 @@ export default function ProfilePage() {
     email: "",
     telefono: "",
     direccion: "",
+  } as {
+    nombre: string;
+    apellido: string;
+    email: string;
+    telefono: string;
+    direccion: string;
   })
 
   useEffect(() => {
@@ -38,8 +44,8 @@ export default function ProfilePage() {
           nombre: userData.nombre,
           apellido: userData.apellido,
           email: userData.email,
-          telefono: "",
-          direccion: "",
+          telefono: userData.telefono?.toString() || "",
+          direccion: userData.direccion || "",
         })
         return
       }
@@ -64,8 +70,8 @@ export default function ProfilePage() {
         nombre: userData.nombre,
         apellido: userData.apellido,
         email: userData.email,
-        telefono: "",
-        direccion: "",
+        telefono: userData.telefono?.toString() || "",
+        direccion: userData.direccion || "",
       })
     } catch (e) {
       router.push("/login")
@@ -77,8 +83,61 @@ export default function ProfilePage() {
   }
 
   const handleSave = () => {
-    console.log("Profile updated:", formData)
-    setEditing(false)
+    ;(async () => {
+      try {
+        // Validate phone number
+        let phoneNumber = null;
+        if (formData.telefono && formData.telefono.trim() !== '') {
+          // Remove any non-digit characters
+          const cleanPhone = formData.telefono.replace(/\D/g, '');
+          if (cleanPhone) {
+            phoneNumber = parseInt(cleanPhone);
+          }
+        }
+
+        console.log('Sending phone number:', phoneNumber); // Debug log
+
+        const resp = await fetch(`/api/users/${user.idUsuario}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            nombre: formData.nombre,
+            apellido: formData.apellido,
+            telefono: phoneNumber,
+            direccion: formData.direccion || null,
+          }),
+        })
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({ error: 'Unknown error' }))
+          alert(err.error || 'Error al actualizar el perfil')
+          return
+        }
+
+        const updated = await resp.json()
+        // Actualizar estado local y localStorage
+        setUser(updated)
+        setFormData({
+          nombre: updated.nombre || "",
+          apellido: updated.apellido || "",
+          email: updated.email || formData.email,
+          telefono: updated.telefono || "",
+          direccion: updated.direccion || "",
+        })
+        try {
+          localStorage.setItem("auth_user", JSON.stringify(updated))
+        } catch (e) {
+          // ignore
+        }
+
+        setEditing(false)
+        alert('Perfil actualizado correctamente')
+      } catch (error) {
+        console.error('Error updating profile:', error)
+        alert('Error al actualizar el perfil')
+      }
+    })()
   }
 
   if (!user) return <div className="flex items-center justify-center h-screen">Cargando...</div>
@@ -141,6 +200,7 @@ export default function ProfilePage() {
                     <label className="text-sm font-medium">Teléfono</label>
                     <Input
                       name="telefono"
+                      type="number"
                       placeholder="Tu teléfono"
                       value={formData.telefono}
                       onChange={handleChange}

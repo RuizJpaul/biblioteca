@@ -35,8 +35,18 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       direccion: body.direccion,
     })
 
+    // Ensure telefono is either null or a valid integer
+    const telefono = body.telefono === null || body.telefono === undefined ? null : 
+                    typeof body.telefono === 'number' ? body.telefono : null;
+    
+    console.log('Processing phone number:', telefono); // Debug log
+
     await sql`
-      UPDATE usuario SET nombre = ${body.nombre}, apellido = ${body.apellido}, telefono = ${body.telefono ?? null}, direccion = ${body.direccion ?? null}
+      UPDATE usuario SET 
+        nombre = ${body.nombre}, 
+        apellido = ${body.apellido}, 
+        telefono = ${telefono}, 
+        direccion = ${body.direccion ?? null}
       WHERE idUsuario = ${Number.parseInt(id)}
     `
 

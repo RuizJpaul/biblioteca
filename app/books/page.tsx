@@ -10,17 +10,17 @@ import { useAuth } from "@/hooks/use-auth"
 import { ExchangeModal } from "@/components/exchange-modal"
 
 interface Book {
-  idLibro?: number // opcional, por si viene undefined
+  idLibro?: number
   titulo: string
   autor: string
   genero: string
-  img_url: string
-  usuario_nombre: string
-  descripcion: string
+  img_url?: string
+  usuario_nombre?: string
+  usuario_apellido?: string
+  descripcion?: string
   anio?: number
   idUsuario?: number
-  // posible idusuario en minúscula si viene así
-  idusuario?: number
+  estado?: string
 }
 
 export default function BooksPage() {
@@ -34,14 +34,41 @@ export default function BooksPage() {
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const response = await fetch("/api/books")
+        const response = await fetch("/api/books", {
+          headers: {
+            'Accept': 'application/json',
+          },
+          cache: 'no-store'
+        })
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
         const data = await response.json()
-        // normalize rows: ensure idLibro and idUsuario exist
-        const normalized = (Array.isArray(data) ? data : []).map((b: any, idx: number) => ({
-          ...b,
-          idLibro: b.idLibro ?? b.idlibro ?? b.id ?? idx,
-          idUsuario: b.idUsuario ?? b.idusuario ?? b.userid ?? null,
-        }))
+        console.log('Fetched data:', data) // Para depuración
+        
+        if (!Array.isArray(data)) {
+          console.error('Data is not an array:', data)
+          setBooks([])
+          return
+        }
+        
+        // normalize rows
+        const normalized = data.map((b: any) => ({
+          idLibro: b.idlibro || b.idLibro,
+          titulo: b.titulo || '',
+          autor: b.autor || '',
+          genero: b.genero || 'Sin género',
+          img_url: b.img_url,
+          estado: b.estado || 'disponible',
+          idUsuario: b.idusuario || b.idUsuario,
+          usuario_nombre: b.usuario_nombre || 'Usuario',
+          usuario_apellido: b.usuario_apellido || '',
+          descripcion: b.descripcion || ''
+        } as Book))
+        
+        console.log('Normalized books:', normalized) // Para depuración
         setBooks(normalized)
       } catch (error) {
         console.error("Error fetching books:", error)
@@ -107,7 +134,7 @@ export default function BooksPage() {
                 {filteredBooks.length > 0 ? (
                   filteredBooks.map((book, index) => {
                     const currentUid = (auth.user as any)?.idUsuario ?? (auth.user as any)?.idusuario ?? null
-                    const isOwn = !!currentUid && (book.idUsuario === currentUid || book.idusuario === currentUid)
+                    const isOwn = !!currentUid && book.idUsuario === currentUid
 
                     return (
                       <Card
@@ -168,8 +195,8 @@ export default function BooksPage() {
                     bookId={selectedBook.idLibro!}
                     bookTitle={selectedBook.titulo}
                     bookAuthor={selectedBook.autor}
-                    userName={selectedBook.usuario_nombre}
-                    userId={selectedBook.idUsuario || selectedBook.idusuario || 0}
+                    userName={selectedBook.usuario_nombre || 'Usuario'}
+                    userId={selectedBook.idUsuario || 0}
                     onClose={() => setSelectedBook(null)}
                     onPropose={async (myBookId) => {
                       try {
@@ -180,7 +207,7 @@ export default function BooksPage() {
                             libro_ofrecido_id: myBookId,
                             libro_recibido_id: selectedBook.idLibro,
                             usuario_origen_id: (auth.user as any)?.idUsuario,
-                            usuario_destino_id: selectedBook.idUsuario || selectedBook.idusuario || 0
+                            usuario_destino_id: selectedBook.idUsuario || 0
                           })
                         })
 

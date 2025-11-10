@@ -41,6 +41,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Campos requeridos incompletos" }, { status: 400 })
     }
 
+    // No permitir que el libro ofrecido y el recibido sean el mismo
+    if (Number(libro_ofrecido_id) === Number(libro_recibido_id)) {
+      return NextResponse.json({ error: "No puedes proponer un intercambio con el mismo libro" }, { status: 400 })
+    }
+
     // Validar que no sea un auto-intercambio
     if (usuario_origen_id === usuario_destino_id) {
       return NextResponse.json({ error: "No puedes intercambiar libros contigo mismo" }, { status: 400 })
