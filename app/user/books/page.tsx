@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation"
 import { isAdmin } from "@/lib/role"
 import Image from "next/image"
 import { ExchangeModal } from "@/components/exchange-modal"
+import { useSession } from "next-auth/react"
 
 interface Book {
   idLibro?: number
@@ -26,7 +27,19 @@ interface Book {
 }
 
 export default function UserBooksPage() {
+  const { data: session } = useSession()
   const router = useRouter()
+  useEffect(() => {
+    if ((session?.user as any)?.notRegistered) {
+      alert("Usted no ha sido registrado. Por favor contacte al administrador.")
+      localStorage.removeItem("auth_user")
+      router.push("/login")
+    }
+  }, [session, router])
+  if ((session?.user as any)?.notRegistered) {
+    return <div />
+  }
+
   const [user, setUser] = useState<any>(null)
   const [books, setBooks] = useState<Book[]>([])
   const [loading, setLoading] = useState(true)

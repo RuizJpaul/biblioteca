@@ -16,6 +16,16 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Limpia el usuario si no hay sesión válida
+    const handleStorageChange = () => {
+      const stored = localStorage.getItem("auth_user")
+      if (!stored) {
+        setUser(null)
+        setLoading(false)
+      }
+    }
+    window.addEventListener("storage", handleStorageChange)
+
     // Primero intentar leer localStorage (establecido por el cliente al hacer login)
     const tryFromLocalStorage = () => {
       try {
@@ -89,6 +99,10 @@ export function useAuth() {
     }
 
     fetchMe()
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+    }
   }, [])
 
   const logout = () => {

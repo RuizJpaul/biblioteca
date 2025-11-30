@@ -1,18 +1,31 @@
 "use client"
 
 import type React from "react"
-
+import { useSession } from "next-auth/react"
+import { useEffect } from "react"
 import { UserNavbar } from "@/components/user-navbar"
 import { PublicFooter } from "@/components/public-footer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { isAdmin } from "@/lib/role"
 
 export default function AddBookPage() {
+  const { data: session } = useSession()
   const router = useRouter()
+  useEffect(() => {
+    if ((session?.user as any)?.notRegistered) {
+      alert("Usted no ha sido registrado. Por favor contacte al administrador.")
+      localStorage.removeItem("auth_user")
+      router.push("/login")
+    }
+  }, [session, router])
+  if ((session?.user as any)?.notRegistered) {
+    return <div />
+  }
+
   const [user, setUser] = useState<any>(null)
   const [formData, setFormData] = useState({
     titulo: "",

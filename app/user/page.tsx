@@ -8,6 +8,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { isAdmin } from "@/lib/role"
+import { useSession } from "next-auth/react"
 
 interface User {
   idUsuario: number
@@ -18,12 +19,27 @@ interface User {
 }
 
 export default function UserPage() {
+  const { data: session } = useSession()
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [myBooksCount, setMyBooksCount] = useState<number | null>(null)
   const [myExchangesCount, setMyExchangesCount] = useState<number | null>(null)
   const [totalBooks, setTotalBooks] = useState<number | null>(null)
+  const [blocked, setBlocked] = useState(false)
+
+  useEffect(() => {
+    if ((session?.user as any)?.notRegistered) {
+      // Si el usuario viene de Google, redirige a /register-google
+      if ((session?.user as any)?.email && !(session?.user as any)?.password) {
+        router.push("/register-google")
+        return
+      }
+      alert("Usted no ha sido registrado. Por favor contacte al administrador.")
+      setBlocked(true)
+      router.push("/login")
+    }
+  }, [session, router])
 
   useEffect(() => {
     try {
@@ -96,6 +112,10 @@ export default function UserPage() {
       mounted = false
     }
   }, [user])
+
+  if (blocked) {
+    return <div />
+  }
 
   if (loading || !user) {
     return <div className="flex items-center justify-center h-screen">Cargando...</div>

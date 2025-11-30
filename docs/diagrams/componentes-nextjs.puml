@@ -1,0 +1,121 @@
+@startuml Estructura Next.js App Router
+package "app/" {
+    folder "/ (Raíz)" {
+        [layout.tsx] as RootLayout
+        [page.tsx - Landing] as LandingPage
+        [globals.css] as GlobalCSS
+    }
+    
+    folder "/user" {
+        [page.tsx - Dashboard] as UserDashboard
+        folder "/my-books" {
+            [page.tsx - Lista] as MyBooksList
+            folder "/add" {
+                [page.tsx - Agregar] as AddBook
+            }
+            folder "/edit/[id]" {
+                [page.tsx - Editar] as EditBook
+            }
+        }
+        folder "/profile" {
+            [page.tsx - Perfil] as UserProfile
+        }
+    }
+    
+    folder "/admin" {
+        [page.tsx - Admin Panel] as AdminDashboard
+        folder "/users" {
+            [page.tsx - Gestión Users] as AdminUsers
+        }
+        folder "/books" {
+            [page.tsx - Gestión Books] as AdminBooks
+        }
+    }
+    
+    folder "/api" {
+        folder "/auth" {
+            [route.ts - login] as LoginRoute
+            [route.ts - register] as RegisterRoute
+            [route.ts - me] as MeRoute
+        }
+        folder "/books" {
+            [route.ts - GET/POST] as BooksRoute
+            folder "/[id]" {
+                [route.ts - GET/PUT/DELETE] as BookIdRoute
+            }
+        }
+        folder "/users" {
+            [route.ts - GET] as UsersRoute
+            folder "/[id]" {
+                [route.ts - GET/PUT] as UserIdRoute
+            }
+        }
+    }
+}
+
+package "components/" {
+    [user-navbar.tsx] as UserNav
+    [admin-navbar.tsx] as AdminNav
+    [public-navbar.tsx] as PublicNav
+    [exchange-modal.tsx] as ExchangeModal
+    folder "ui/" {
+        [button.tsx] as Button
+        [card.tsx] as Card
+        [input.tsx] as Input
+        [dialog.tsx] as Dialog
+    }
+}
+
+package "lib/" {
+    [db.ts] as DBLib
+    [auth.ts] as AuthLib
+    [utils.ts] as UtilsLib
+    [role.ts] as RoleLib
+}
+
+package "hooks/" {
+    [use-auth.ts] as UseAuth
+    [use-toast.ts] as UseToast
+}
+
+' Relaciones de uso
+RootLayout --> GlobalCSS
+LandingPage --> PublicNav
+UserDashboard --> UserNav
+UserDashboard --> UseAuth
+AdminDashboard --> AdminNav
+AdminDashboard --> RoleLib : "Verificar admin"
+
+MyBooksList --> Card
+MyBooksList --> Button
+MyBooksList --> Dialog
+EditBook --> Input
+EditBook --> Button
+
+LoginRoute --> AuthLib
+RegisterRoute --> AuthLib
+BooksRoute --> DBLib
+BookIdRoute --> DBLib
+BookIdRoute --> AuthLib : "Verificar ownership"
+
+DBLib --> "PostgreSQL\nNeon" : "Connection Pool"
+
+note right of BookIdRoute
+  **Async Params (Next.js 15+):**
+  export async function PUT(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) {
+    const { id } = await params
+    ...
+  }
+end note
+
+note bottom of UseAuth
+  **Custom Hook:**
+  - Obtiene usuario actual
+  - Verifica autenticación
+  - Redirige si no autorizado
+end note
+
+@enduml

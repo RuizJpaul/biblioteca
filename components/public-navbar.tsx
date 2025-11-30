@@ -3,9 +3,11 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
+import { useSession, signOut } from "next-auth/react"
 
 export function PublicNavbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const { data: session, status } = useSession()
 
   return (
     <nav className="sticky top-0 z-50 bg-background border-b border-border">
@@ -31,18 +33,31 @@ export function PublicNavbar() {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="ghost">Ingresar</Button>
-            </Link>
-            <Link href="/register">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-black text-black hover:bg-black hover:text-white transition-colors"
-              >
-                Unirse
-              </Button>
-            </Link>
+            {status === "authenticated" && !(session?.user as any)?.notRegistered ? (
+              <>
+                <Link href="/user/profile">
+                  <Button variant="ghost">Perfil</Button>
+                </Link>
+                <Button variant="outline" onClick={() => signOut({ callbackUrl: "/login" })}>
+                  Cerrar sesión
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost">Ingresar</Button>
+                </Link>
+                <Link href="/register">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-black text-black hover:bg-black hover:text-white transition-colors"
+                  >
+                    Unirse
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}

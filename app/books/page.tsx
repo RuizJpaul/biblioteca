@@ -80,6 +80,12 @@ export default function BooksPage() {
     fetchBooks()
   }, [])
 
+  useEffect(() => {
+    if (!auth.user) {
+      setSelectedBook(null)
+    }
+  }, [auth.user])
+
   // Filtro de libros según búsqueda y género
   const filteredBooks = books.filter((book) => {
     const matchesSearch = book.titulo?.toLowerCase().includes(search.toLowerCase())
@@ -133,13 +139,13 @@ export default function BooksPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredBooks.length > 0 ? (
                   filteredBooks.map((book, index) => {
-                    const currentUid = (auth.user as any)?.idUsuario ?? (auth.user as any)?.idusuario ?? null
-                    const isOwn = !!currentUid && book.idUsuario === currentUid
+                    const currentUid = auth.user && typeof auth.user.idUsuario === "number" ? auth.user.idUsuario : null;
+                    const isOwn = !!currentUid && book.idUsuario === currentUid;
 
                     return (
                       <Card
                         key={`book-${book.idLibro ?? index}`}
-                        className={`transition overflow-hidden ${isOwn ? "bg-muted/50 border-primary" : "hover:shadow-lg"}`}
+                        className={`transition overflow-hidden ${isOwn ? "bg-gray-200 opacity-60 border border-gray-400" : "hover:shadow-lg"}`}
                       >
                         <div className="h-40 bg-secondary/20 flex items-center justify-center relative">
                           {book.img_url ? (
@@ -147,18 +153,16 @@ export default function BooksPage() {
                               src={book.img_url || "/placeholder.svg"}
                               alt={book.titulo || "Libro sin título"}
                               className="w-full h-full object-cover"
+                              style={isOwn ? { filter: 'grayscale(1)', opacity: 0.6 } : {}}
                             />
                           ) : (
                             <span className="text-5xl"></span>
                           )}
-
-                          {isOwn && (
-                            <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
-                              <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
-                                Mi libro
-                              </span>
+                          {isOwn && auth.user ? (
+                            <div className="absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2">
+                              <span className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm">Tu Libro</span>
                             </div>
-                          )}
+                          ) : null}
                         </div>
                         <CardContent className="pt-4">
                           <h3 className="font-semibold text-lg mb-1">
@@ -172,17 +176,20 @@ export default function BooksPage() {
                           {book.anio && (
                             <p className="text-xs text-muted-foreground">Año: {book.anio}</p>
                           )}
-                          {!isOwn && (
-                            <Button
-                              className="w-full mt-4"
+                          {isOwn && auth.user ? (
+                            <div className="w-full mt-4 text-center text-blue-600 font-semibold">Tu Libro</div>
+                          ) : null}
+                          {!isOwn && auth.user ? (
+                            <button
+                              className="bg-blue-600 text-white px-4 py-2 rounded w-full mt-4"
                               onClick={() => setSelectedBook(book)}
                             >
                               Proponer Intercambio
-                            </Button>
-                          )}
+                            </button>
+                          ) : null}
                         </CardContent>
                       </Card>
-                    )
+                    );
                   })
                 ) : (
                   <div className="col-span-full text-center py-12">

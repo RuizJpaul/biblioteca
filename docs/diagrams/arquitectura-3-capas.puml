@@ -1,0 +1,103 @@
+@startuml Sistema de Biblioteca - Arquitectura
+
+skinparam componentStyle rectangle
+skinparam backgroundColor #FEFEFE
+skinparam component {
+    BackgroundColor<<frontend>> LightBlue
+    BackgroundColor<<api>> LightGreen
+    BackgroundColor<<database>> LightYellow
+    BackgroundColor<<auth>> LightCoral
+    BorderColor Black
+    ArrowColor Black
+}
+
+package "Capa de Presentación (Frontend)" <<frontend>> {
+    component "Páginas Públicas" as PublicPages
+    component "Panel de Usuario" as UserPanel
+    component "Panel Admin" as AdminPanel
+    component "Componentes UI" as UIComponents
+}
+
+package "Capa de Negocio (API Layer)" <<api>> {
+    component "API Books\nGET, POST, PUT, DELETE" as BooksAPI
+    component "API Users\nGET, PUT" as UsersAPI
+    component "API Intercambios\nGET, POST, PUT" as ExchangeAPI
+    component "API Admin\nEstadísticas" as AdminAPI
+    component "API Puntos Entrega" as LocationsAPI
+}
+
+package "Módulo de Autenticación" <<auth>> {
+    component "Auth Middleware" as AuthMiddleware
+    component "API Auth\nLogin, Register, Logout" as AuthAPI
+    component "Auth Helpers\nhashPassword, verifyPassword" as AuthHelpers
+}
+
+package "Capa de Datos (Database)" <<database>> {
+    database "PostgreSQL Neon" {
+        component "Tabla: usuario" as TableUser
+        component "Tabla: libro" as TableBook
+        component "Tabla: intercambio" as TableExchange
+        component "Tabla: punto_entrega" as TableLocation
+    }
+    component "Connection Pool" as DBConnection
+}
+
+' Relaciones Frontend -> API
+PublicPages --> BooksAPI : Consulta catálogo
+PublicPages --> AuthAPI : Login/Register
+UserPanel --> BooksAPI : CRUD Libros
+UserPanel --> ExchangeAPI : Intercambios
+UserPanel --> UsersAPI : Actualizar perfil
+AdminPanel --> AdminAPI : Estadísticas
+AdminPanel --> BooksAPI : Gestión global
+AdminPanel --> UsersAPI : Gestión usuarios
+
+UIComponents --> PublicPages
+UIComponents --> UserPanel
+UIComponents --> AdminPanel
+
+' Relaciones API -> Auth
+BooksAPI --> AuthMiddleware : Validar usuario
+UsersAPI --> AuthMiddleware : Validar usuario
+ExchangeAPI --> AuthMiddleware : Validar usuario
+AdminAPI --> AuthMiddleware : Validar admin
+LocationsAPI --> AuthMiddleware : Validar admin
+
+AuthAPI --> AuthHelpers : Hash/Verify
+AuthMiddleware --> AuthHelpers : getUserFromCookie
+
+' Relaciones API -> Database
+BooksAPI --> DBConnection : SQL Queries
+UsersAPI --> DBConnection : SQL Queries
+ExchangeAPI --> DBConnection : SQL Queries
+AdminAPI --> DBConnection : SQL Queries
+LocationsAPI --> DBConnection : SQL Queries
+AuthAPI --> DBConnection : SQL Queries
+
+' Relaciones Database
+DBConnection --> TableUser
+DBConnection --> TableBook
+DBConnection --> TableExchange
+DBConnection --> TableLocation
+
+TableBook --> TableUser : FK idUsuario
+TableExchange --> TableBook : FK libros
+TableExchange --> TableUser : FK usuarios
+
+note right of AuthMiddleware
+  Seguridad:
+  - Cookies HTTP-only
+  - Verificación ownership
+  - Validación roles
+  - Hash SHA-256
+end note
+
+note right of DBConnection
+  Optimización:
+  - Connection pooling
+  - Índices en FK
+  - Cascada en DELETE
+end note
+
+@enduml
+

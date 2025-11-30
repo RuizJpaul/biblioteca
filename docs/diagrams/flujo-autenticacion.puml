@@ -1,0 +1,47 @@
+@startuml Flujo de Autenticación
+actor Usuario
+participant "Login Page" as Login
+participant "POST /api/auth/login" as AuthAPI
+participant "lib/auth.ts" as AuthLib
+database "PostgreSQL" as DB
+participant "Cookie HttpOnly" as Cookie
+participant "Panel Usuario" as Dashboard
+
+Usuario -> Login: 1. Ingresa credenciales\n(email, password)
+Login -> AuthAPI: 2. POST { email, password }
+AuthAPI -> AuthLib: 3. hashPassword(password)
+AuthLib --> AuthAPI: 4. SHA-256 hash
+AuthAPI -> DB: 5. SELECT * FROM usuario\nWHERE email = ? AND contrasena = ?
+alt Credenciales válidas
+    DB --> AuthAPI: 6. Usuario encontrado\n{ idUsuario, nombre, tipoUsuario }
+    AuthAPI -> Cookie: 7. Set-Cookie: auth=base64(userInfo)\nHttpOnly, Secure, SameSite
+    Cookie --> AuthAPI: 8. Cookie creada
+    AuthAPI --> Login: 9. { success: true }
+    Login --> Usuario: 10. Redirect a /user
+    Usuario -> Dashboard: 11. Accede al panel
+    Dashboard -> AuthAPI: 12. GET /api/auth/me\n(Cookie automática)
+    AuthAPI -> AuthLib: 13. getUserFromCookie(request)
+    AuthLib --> AuthAPI: 14. { idUsuario, nombre, tipoUsuario }
+    AuthAPI --> Dashboard: 15. Usuario autenticado ✓
+else Credenciales inválidas
+    DB --> AuthAPI: 6. Usuario no encontrado
+    AuthAPI --> Login: 9. { error: "Credenciales inválidas" }
+    Login --> Usuario: 10. Muestra error
+end
+
+note right of Cookie
+  **Seguridad de Cookie:**
+  - HttpOnly: No accesible por JS
+  - Secure: Solo HTTPS (prod)
+  - SameSite: Previene CSRF
+  - Max-Age: Sesión persistente
+end note
+
+note right of AuthLib
+  **Hash Password:**
+  crypto.createHash('sha256')
+    .update(password)
+    .digest('hex')
+end note
+
+@enduml

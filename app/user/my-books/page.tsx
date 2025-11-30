@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation"
 import { isAdmin } from "@/lib/role"
 import { useAuth } from "@/hooks/use-auth"
 import Image from "next/image"
+import { useSession } from "next-auth/react"
 
 interface MyBook {
   idLibro: number
@@ -22,11 +23,23 @@ interface MyBook {
 }
 
 export default function MyBooksPage() {
+  const { data: session } = useSession()
   const router = useRouter()
   const { user, loading } = useAuth()
   const [books, setBooks] = useState<MyBook[]>([])
   const [loadingBooks, setLoadingBooks] = useState(true)
   const [selectedBook, setSelectedBook] = useState<MyBook | null>(null)
+
+  useEffect(() => {
+    if ((session?.user as any)?.notRegistered) {
+      alert("Usted no ha sido registrado. Por favor contacte al administrador.")
+      localStorage.removeItem("auth_user")
+      router.push("/login")
+    }
+  }, [session, router])
+  if ((session?.user as any)?.notRegistered) {
+    return <div />
+  }
 
   useEffect(() => {
     // Wait until auth state is resolved

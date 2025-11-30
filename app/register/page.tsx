@@ -11,6 +11,7 @@ import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { isAdmin } from "@/lib/role"
+import { signIn } from "next-auth/react"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -147,6 +148,26 @@ export default function RegisterPage() {
                 {loading ? "Registrando..." : "Registrarse"}
               </Button>
             </form>
+            <div className="my-4 flex items-center justify-center">
+              <span className="text-muted-foreground">o</span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full flex items-center justify-center gap-2"
+              onClick={() => signIn("google", { callbackUrl: "/user", prompt: "select_account" })}
+            >
+              <svg width="22" height="22" viewBox="0 0 48 48" style={{ marginRight: 8 }}>
+                <g>
+                  <path fill="#4285F4" d="M24 9.5c3.54 0 6.73 1.22 9.24 3.22l6.91-6.91C36.36 2.34 30.55 0 24 0 14.61 0 6.27 5.7 2.44 14.02l8.06 6.27C12.44 13.13 17.77 9.5 24 9.5z"/>
+                  <path fill="#34A853" d="M46.09 24.5c0-1.64-.15-3.22-.44-4.75H24v9.02h12.44c-.54 2.91-2.18 5.38-4.64 7.04l7.18 5.59C43.73 37.7 46.09 31.64 46.09 24.5z"/>
+                  <path fill="#FBBC05" d="M10.5 28.29c-1.13-3.38-1.13-7.02 0-10.4l-8.06-6.27C.81 15.61 0 19.67 0 24c0 4.33.81 8.39 2.44 12.38l8.06-6.27z"/>
+                  <path fill="#EA4335" d="M24 46c6.55 0 12.36-2.34 16.15-6.31l-7.18-5.59c-2.01 1.35-4.59 2.15-7.47 2.15-6.23 0-11.56-3.63-13.5-8.79l-8.06 6.27C6.27 42.3 14.61 48 24 48z"/>
+                  <path fill="none" d="M0 0h48v48H0z"/>
+                </g>
+              </svg>
+              Registrarse con Google
+            </Button>
             <p className="text-sm text-center mt-4 text-muted-foreground">
               ¿Ya tienes cuenta?{" "}
               <Link href="/login" className="text-primary hover:underline">

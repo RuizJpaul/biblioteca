@@ -11,9 +11,22 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { isAdmin } from "@/lib/role"
 import { DeliveryLocationsForm } from "@/components/delivery-locations-form"
+import { useSession } from "next-auth/react"
 
 export default function ProfilePage() {
+  const { data: session, status } = useSession()
   const router = useRouter()
+  useEffect(() => {
+    if ((session?.user as any)?.notRegistered) {
+      alert("Usted no ha sido registrado. Por favor contacte al administrador.")
+      localStorage.removeItem("auth_user")
+      router.push("/login")
+    }
+  }, [session, router])
+  if ((session?.user as any)?.notRegistered) {
+    return <div />
+  }
+
   const [user, setUser] = useState<any>(null)
   const [editing, setEditing] = useState(false)
   const [formData, setFormData] = useState({
@@ -31,52 +44,36 @@ export default function ProfilePage() {
   })
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("auth_user")
-      if (stored) {
-        const userData = JSON.parse(stored)
-        if (isAdmin(userData.tipoUsuario)) {
-          router.push("/admin")
-          return
-        }
-        setUser(userData)
-        setFormData({
-          nombre: userData.nombre,
-          apellido: userData.apellido,
-          email: userData.email,
-          telefono: userData.telefono?.toString() || "",
-          direccion: userData.direccion || "",
-        })
-        return
-      }
-    } catch (e) {
-      // ignore
-    }
-
-    const cookie = document.cookie.split("; ").find((c) => c.startsWith("auth="))
-    if (!cookie) {
-      router.push("/login")
-      return
-    }
-
-    try {
-      const userData = JSON.parse(Buffer.from(cookie.split("=")[1], "base64").toString())
-      if (isAdmin(userData.tipoUsuario)) {
-        router.push("/admin")
-        return
-      }
-      setUser(userData)
+    if (session && session.user) {
+      setUser(session.user)
       setFormData({
-        nombre: userData.nombre,
-        apellido: userData.apellido,
-        email: userData.email,
-        telefono: userData.telefono?.toString() || "",
-        direccion: userData.direccion || "",
+        nombre: session.user.name || "",
+        apellido: "",
+        email: session.user.email || "",
+        telefono: "",
+        direccion: "",
       })
-    } catch (e) {
-      router.push("/login")
+    } else {
+      try {
+        const stored = localStorage.getItem("auth_user")
+        if (stored) {
+          const userData = JSON.parse(stored)
+          if (isAdmin(userData.tipoUsuario)) {
+            router.push("/admin")
+            return
+          }
+          setUser(userData)
+          setFormData({
+            nombre: userData.nombre || "",
+            apellido: userData.apellido || "",
+            email: userData.email || "",
+            telefono: userData.telefono || "",
+            direccion: userData.direccion || "",
+          })
+        }
+      } catch {}
     }
-  }, [router])
+  }, [session])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -149,7 +146,8 @@ export default function ProfilePage() {
     })()
   }
 
-  if (!user) return <div className="flex items-center justify-center h-screen">Cargando...</div>
+  if (status === "loading") return <div>Cargando...</div>
+  if (!user) return <div>No autenticado</div>
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -161,79 +159,78 @@ export default function ProfilePage() {
               <CardTitle>Mi Perfil</CardTitle>
             </CardHeader>
             <CardContent>
-              {!editing ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Nombre</p>
-                      <p className="font-semibold">{formData.nombre}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Apellido</p>
-                      <p className="font-semibold">{formData.apellido}</p>
-                    </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nombre</p>
+                    <p className="font-semibold">{formData.nombre}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-semibold">{formData.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Teléfono</p>
-                    <p className="font-semibold">{formData.telefono || "No especificado"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Dirección</p>
-                    <p className="font-semibold">{formData.direccion || "No especificada"}</p>
-                  </div>
-                  <Button onClick={() => setEditing(true)} className="w-full mt-6">
-                    Editar Perfil
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium">Nombre</label>
-                      <Input name="nombre" value={formData.nombre} onChange={handleChange} />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Apellido</label>
-                      <Input name="apellido" value={formData.apellido} onChange={handleChange} />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Email</label>
-                    <Input name="email" value={formData.email} onChange={handleChange} disabled />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Teléfono</label>
-                    <Input
-                      name="telefono"
-                      type="number"
-                      placeholder="Tu teléfono"
-                      value={formData.telefono}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Dirección</label>
-                    <Input
-                      name="direccion"
-                      placeholder="Tu dirección"
-                      value={formData.direccion}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div className="flex gap-2 pt-4">
-                    <Button onClick={handleSave} className="flex-1">
-                      Guardar
-                    </Button>
-                    <Button variant="outline" onClick={() => setEditing(false)} className="flex-1">
-                      Cancelar
-                    </Button>
+                    <p className="text-sm text-muted-foreground">Apellido</p>
+                    <p className="font-semibold">{formData.apellido}</p>
                   </div>
                 </div>
-              )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Email</p>
+                  <p className="font-semibold">{formData.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Teléfono</p>
+                  <p className="font-semibold">{formData.telefono || "No especificado"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Dirección</p>
+                  <p className="font-semibold">{formData.direccion || "No especificada"}</p>
+                </div>
+                <Button onClick={() => setEditing(true)} className="w-full mt-6">
+                  Editar Perfil
+                </Button>
+                {editing && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium">Nombre</label>
+                        <Input name="nombre" value={formData.nombre} onChange={handleChange} />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Apellido</label>
+                        <Input name="apellido" value={formData.apellido} onChange={handleChange} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Email</label>
+                      <Input name="email" value={formData.email} onChange={handleChange} disabled />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Teléfono</label>
+                      <Input
+                        name="telefono"
+                        type="number"
+                        placeholder="Tu teléfono"
+                        value={formData.telefono}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Dirección</label>
+                      <Input
+                        name="direccion"
+                        placeholder="Tu dirección"
+                        value={formData.direccion}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-4">
+                      <Button onClick={handleSave} className="flex-1">
+                        Guardar
+                      </Button>
+                      <Button variant="outline" onClick={() => setEditing(false)} className="flex-1">
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 

@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
+import { useSession, signOut } from "next-auth/react"
 
 interface UserNavbarProps {
   userName: string
@@ -11,22 +12,17 @@ interface UserNavbarProps {
 
 export function UserNavbar({ userName }: UserNavbarProps) {
   const router = useRouter()
+  const { data: session, status } = useSession()
 
-  const { logout } = useAuth()
+  if ((session?.user as any)?.notRegistered) {
+    return null
+  }
 
   const handleLogout = () => {
-    logout()
-    try {
-      router.replace("/login")
-    } catch (e) {
-      // ignore
-    }
-    try {
-      window.location.replace("/login")
-    } catch (e) {
-      // ignore
-    }
+    signOut({ callbackUrl: "/login" })
   }
+
+  const user = session?.user || null
 
   return (
     <nav className="bg-background border-b border-border sticky top-0 z-50">
@@ -38,25 +34,23 @@ export function UserNavbar({ userName }: UserNavbarProps) {
 
           <div className="hidden md:flex items-center gap-8">
             <Link href="/user" className="text-foreground hover:text-primary transition">
-              Inicio
+              Mi Panel
             </Link>
-            <Link href="/user/books" className="text-foreground hover:text-primary transition">
-              Libros
-            </Link>
-            <Link href="/user/my-books" className="text-foreground hover:text-primary transition">
-              Mis Libros
+            <Link href="/user/profile" className="text-foreground hover:text-primary transition">
+              Perfil
             </Link>
           </div>
 
-          <div className="flex items-center gap-4">
-            <Link href="/user/profile">
-              <Button variant="ghost" size="sm">
-                Perfil
-              </Button>
-            </Link>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              Cerrar Sesión
-            </Button>
+          <div className="flex items-center gap-3">
+            {user && (
+              <>
+                {user.image && (
+                  <img src={user.image} alt="avatar" style={{ width: 32, height: 32, borderRadius: "50%" }} />
+                )}
+                <span className="font-medium text-foreground mr-2">{user.name || user.email}</span>
+              </>
+            )}
+            <Button variant="ghost" onClick={handleLogout}>Cerrar sesión</Button>
           </div>
         </div>
       </div>

@@ -1,18 +1,20 @@
 "use client"
 
 import type React from "react"
-
+import { useSession } from "next-auth/react"
+import { useEffect } from "react"
 import { UserNavbar } from "@/components/user-navbar"
 import { PublicFooter } from "@/components/public-footer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState, useEffect as useEffectReact } from "react"
 import { isAdmin } from "@/lib/role"
 import { useAuth } from "@/hooks/use-auth"
 
 export default function EditBookPage({ params }: { params: Promise<{ id: string }> }) {
+  const { data: session } = useSession()
   const router = useRouter()
   const { user, loading } = useAuth()
   const [loadingBook, setLoadingBook] = useState(true)
@@ -130,6 +132,17 @@ export default function EditBookPage({ params }: { params: Promise<{ id: string 
       console.error("Error updating book:", err)
       alert("Error al actualizar el libro")
     }
+  }
+
+  useEffect(() => {
+    if ((session?.user as any)?.notRegistered) {
+      alert("Usted no ha sido registrado. Por favor contacte al administrador.")
+      localStorage.removeItem("auth_user")
+      router.push("/login")
+    }
+  }, [session, router])
+  if ((session?.user as any)?.notRegistered) {
+    return <div />
   }
 
   if (loading || loadingBook) {
