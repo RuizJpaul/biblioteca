@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 export function StatsSection() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({ books: 0, users: 0 })
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -16,8 +17,9 @@ export function StatsSection() {
         const data = await res.json()
         if (!mounted) return
         setStats({ books: data.books || 0, users: data.users || 0 })
-      } catch (err) {
-        console.error("Error loading public stats:", err)
+      } catch (err: any) {
+        setError("No se pudieron cargar las estadísticas públicas.")
+        setStats({ books: 0, users: 0 })
       } finally {
         if (mounted) setLoading(false)
       }
@@ -32,6 +34,9 @@ export function StatsSection() {
     <section className="bg-secondary/20 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl font-bold text-center mb-8">Nuestro Impacto</h2>
+        {error ? (
+          <div className="text-center text-red-500 mb-8">{error}</div>
+        ) : null}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardContent className="pt-6">
