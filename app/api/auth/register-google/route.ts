@@ -6,7 +6,9 @@ export async function POST(req: Request) {
     const body = await req.json()
     const { nombre, apellido, username, email } = body
     if (!nombre || !apellido || !username || !email) {
-      return NextResponse.json({ error: "Faltan datos obligatorios" }, { status: 400 })
+      const res = NextResponse.json({ error: "Faltan datos obligatorios" }, { status: 400 })
+      res.headers.set('Access-Control-Allow-Origin', '*')
+      return res
     }
 
     const db = getDb()
@@ -14,7 +16,9 @@ export async function POST(req: Request) {
     const existing = await db`SELECT * FROM usuario WHERE email = ${email}`
     const existingRows = Array.isArray(existing) ? existing : (existing?.rows ?? [])
     if (existingRows.length > 0) {
-      return NextResponse.json({ error: "El usuario ya existe" }, { status: 409 })
+      const res = NextResponse.json({ error: "El usuario ya existe" }, { status: 409 })
+      res.headers.set('Access-Control-Allow-Origin', '*')
+      return res
     }
 
     // Crea el usuario en la base de datos
@@ -26,9 +30,13 @@ export async function POST(req: Request) {
     const rows = Array.isArray(result) ? result : (result?.rows ?? [])
     const user = rows[0]
 
-    return NextResponse.json({ user }, { status: 201 })
+    const res = NextResponse.json({ user }, { status: 201 })
+    res.headers.set('Access-Control-Allow-Origin', '*')
+    return res
   } catch (err: any) {
     console.error("Error en register-google:", err)
-    return NextResponse.json({ error: err?.message || "Error al registrar usuario", details: err }, { status: 500 })
+    const res = NextResponse.json({ error: err?.message || "Error al registrar usuario", details: err }, { status: 500 })
+    res.headers.set('Access-Control-Allow-Origin', '*')
+    return res
   }
 }

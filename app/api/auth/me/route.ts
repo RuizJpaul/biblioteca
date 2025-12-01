@@ -4,7 +4,11 @@ export async function GET(req: Request) {
   try {
     const cookieHeader = req.headers.get("cookie") || ""
     const cookie = cookieHeader.split("; ").map(c => c.trim()).find(c => c.startsWith("auth="))
-    if (!cookie) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    if (!cookie) {
+      const res = NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      res.headers.set('Access-Control-Allow-Origin', '*')
+      return res
+    }
 
     const base = cookie.split("=")[1]
     const decoded = Buffer.from(base, "base64").toString()
@@ -20,8 +24,12 @@ export async function GET(req: Request) {
       }
     }
 
-    return NextResponse.json({ user }, { status: 200 })
+    const res = NextResponse.json({ user }, { status: 200 })
+    res.headers.set('Access-Control-Allow-Origin', '*')
+    return res
   } catch (err) {
-    return NextResponse.json({ error: "Invalid auth data" }, { status: 400 })
+    const res = NextResponse.json({ error: "Invalid auth data" }, { status: 400 })
+    res.headers.set('Access-Control-Allow-Origin', '*')
+    return res
   }
 }

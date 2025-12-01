@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     
     console.log('Processed userData:', JSON.stringify(userData, null, 2)) // Debug log
 
-    return NextResponse.json(
+    const res = NextResponse.json(
       {
         user: userData,
         message: "Sesión iniciada",
@@ -67,8 +67,12 @@ export async function POST(request: NextRequest) {
         },
       },
     )
+    res.headers.set('Access-Control-Allow-Origin', '*')
+    return res
   } catch (error) {
     console.error("Login error:", error)
-    return NextResponse.json({ error: "Error al iniciar sesión" }, { status: 500 })
+    const res = NextResponse.json({ error: "Error al iniciar sesión" }, { status: 500 })
+    res.headers.set('Access-Control-Allow-Origin', '*')
+    return res
   }
 }

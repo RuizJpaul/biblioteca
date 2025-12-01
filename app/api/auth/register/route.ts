@@ -6,9 +6,11 @@ export async function POST(request: NextRequest) {
   try {
     const { nombre, apellido, email, username, password, confirmPassword } = await request.json()
 
-    if (!nombre || !apellido || !email || !username || !password) {
-      return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 })
-    }
+      if (!nombre || !apellido || !email || !username || !password) {
+        const res = NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 })
+        res.headers.set('Access-Control-Allow-Origin', '*')
+        return res
+      }
 
     if (password !== confirmPassword) {
       return NextResponse.json({ error: "Las contraseñas no coinciden" }, { status: 400 })
@@ -34,19 +36,21 @@ export async function POST(request: NextRequest) {
           tipoUsuario: typeof rawUser.tipoUsuario === "string" ? rawUser.tipoUsuario.toLowerCase().trim() : rawUser.tipousuario ?? "usuario",
         }
 
-      return NextResponse.json(
-        {
-          user,
-          message: "Usuario creado exitosamente",
-        },
-        {
-          status: 201,
-          headers: {
-            // Cookie HttpOnly for improved security; client can still use response.user
-            "Set-Cookie": `auth=${Buffer.from(JSON.stringify(user)).toString("base64")}; Path=/; HttpOnly; SameSite=Strict`,
+        const res = NextResponse.json(
+          {
+            user,
+            message: "Usuario creado exitosamente",
           },
-        },
-      )
+          {
+            status: 201,
+            headers: {
+              // Cookie HttpOnly for improved security; client can still use response.user
+              "Set-Cookie": `auth=${Buffer.from(JSON.stringify(user)).toString("base64")}; Path=/; HttpOnly; SameSite=Strict`,
+            },
+          },
+        )
+        res.headers.set('Access-Control-Allow-Origin', '*')
+        return res
     } catch (dbError: any) {
       if (dbError.message?.includes("unique")) {
         return NextResponse.json({ error: "El email o username ya está registrado" }, { status: 409 })
@@ -55,6 +59,8 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error("Register error:", error)
-    return NextResponse.json({ error: "Error al registrar usuario" }, { status: 500 })
+      const res = NextResponse.json({ error: "Error al registrar usuario" }, { status: 500 })
+      res.headers.set('Access-Control-Allow-Origin', '*')
+      return res
   }
 }
