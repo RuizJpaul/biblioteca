@@ -1,3 +1,15 @@
+import { NextResponse } from "next/server";
+// Middleware para OPTIONS (preflight CORS)
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
+}
 // Asegúrate de instalar next-auth: npm install next-auth
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
@@ -52,4 +64,15 @@ const handler = NextAuth({
   },
 });
 
-export { handler as GET, handler as POST };
+function withCORS(fn: any) {
+  return async (...args: any[]) => {
+    const res = await fn(...args);
+    if (res?.headers) {
+      res.headers.set("Access-Control-Allow-Origin", "*");
+    }
+    return res;
+  };
+}
+
+export const GET = withCORS(handler.GET ?? handler);
+export const POST = withCORS(handler.POST ?? handler);
