@@ -42,17 +42,28 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const sql = getDb()
     const exchangeId = Number.parseInt(id)
 
+    // Actualizar el estado del intercambio
     const queryResult = await sql`
       UPDATE intercambio 
       SET estado = ${estado} 
       WHERE idIntercambio = ${exchangeId} 
       RETURNING *
     `
-    
     const result = normalizeRows(queryResult)
 
     if (result.length === 0) {
       return NextResponse.json({ error: "Intercambio no encontrado" }, { status: 404 })
+    }
+
+    // Si el intercambio fue aceptado, marcar ambos libros como 'intercambiado'
+    if (estado === 'aceptado') {
+      const intercambio = result[0]
+      // Marcar ambos libros como intercambiados solo si existen
+      const updateRes = await sql`
+        UPDATE libro SET estado = 'intercambiado' WHERE idLibro = ${intercambio.libro_ofrecido_id} OR idLibro = ${intercambio.libro_recibido_id}
+        RETURNING idLibro, estado
+      `
+      console.log('[API Intercambios] Libros marcados como intercambiados:', updateRes);
     }
 
     return NextResponse.json(result[0])

@@ -44,10 +44,10 @@ export async function GET(request: NextRequest) {
 
     let result
     if (userId) {
-      // Mostrar libros que están disponibles O que pertenecen al usuario autenticado
+      // Mostrar libros disponibles o que pertenecen al usuario (incluyendo intercambiados)
       result = await sql`
         ${base}
-        WHERE (l.estado = 'disponible' OR l.idUsuario = ${userId})
+        WHERE (l.estado IN ('disponible', 'intercambiado') OR l.idUsuario = ${userId})
         ORDER BY l.fecha_creacion DESC
       `
     } else {

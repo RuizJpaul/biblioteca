@@ -34,9 +34,13 @@ export async function GET() {
     const booksByCategory = normalize(booksByCategoryRes)
     const recentBooks = normalize(recentBooksRes)
 
-    return NextResponse.json({ users, books, booksByCategory, recentBooks })
+    const res = NextResponse.json({ users, books, booksByCategory, recentBooks })
+    res.headers.set('Access-Control-Allow-Origin', '*')
+    return res
   } catch (error) {
     console.error("Error fetching public stats:", error)
-    return NextResponse.json({ error: "Error al obtener estadísticas públicas" }, { status: 500 })
+    const res = NextResponse.json({ error: "Error al obtener estadísticas públicas" }, { status: 500 })
+    res.headers.set('Access-Control-Allow-Origin', '*')
+    return res
   }
 }

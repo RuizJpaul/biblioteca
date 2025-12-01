@@ -1,3 +1,8 @@
+// Polyfill global fetch para NeonDB en Node.js
+const fetch = require('node-fetch');
+if (!global.fetch) {
+	global.fetch = fetch;
+}
 // Learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom'
 

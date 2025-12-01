@@ -159,78 +159,79 @@ export default function ProfilePage() {
               <CardTitle>Mi Perfil</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Nombre</p>
-                    <p className="font-semibold">{formData.nombre}</p>
+              {!editing ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Nombre</p>
+                      <p className="font-semibold">{formData.nombre}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Apellido</p>
+                      <p className="font-semibold">{formData.apellido}</p>
+                    </div>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Apellido</p>
-                    <p className="font-semibold">{formData.apellido}</p>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-semibold">{formData.email}</p>
                   </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Teléfono</p>
+                    <p className="font-semibold">{formData.telefono || "No especificado"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Dirección</p>
+                    <p className="font-semibold">{formData.direccion || "No especificada"}</p>
+                  </div>
+                  <Button onClick={() => setEditing(true)} className="w-full mt-6">
+                    Editar Perfil
+                  </Button>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-semibold">{formData.email}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Teléfono</p>
-                  <p className="font-semibold">{formData.telefono || "No especificado"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Dirección</p>
-                  <p className="font-semibold">{formData.direccion || "No especificada"}</p>
-                </div>
-                <Button onClick={() => setEditing(true)} className="w-full mt-6">
-                  Editar Perfil
-                </Button>
-                {editing && (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium">Nombre</label>
-                        <Input name="nombre" value={formData.nombre} onChange={handleChange} />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Apellido</label>
-                        <Input name="apellido" value={formData.apellido} onChange={handleChange} />
-                      </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">Nombre</label>
+                      <Input name="nombre" value={formData.nombre} onChange={handleChange} />
                     </div>
                     <div>
-                      <label className="text-sm font-medium">Email</label>
-                      <Input name="email" value={formData.email} onChange={handleChange} disabled />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Teléfono</label>
-                      <Input
-                        name="telefono"
-                        type="number"
-                        placeholder="Tu teléfono"
-                        value={formData.telefono}
-                        onChange={handleChange}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Dirección</label>
-                      <Input
-                        name="direccion"
-                        placeholder="Tu dirección"
-                        value={formData.direccion}
-                        onChange={handleChange}
-                      />
-                    </div>
-                    <div className="flex gap-2 pt-4">
-                      <Button onClick={handleSave} className="flex-1">
-                        Guardar
-                      </Button>
-                      <Button variant="outline" onClick={() => setEditing(false)} className="flex-1">
-                        Cancelar
-                      </Button>
+                      <label className="text-sm font-medium">Apellido</label>
+                      <Input name="apellido" value={formData.apellido} onChange={handleChange} />
                     </div>
                   </div>
-                )}
-              </div>
+                  <div>
+                    <label className="text-sm font-medium">Email</label>
+                    <Input name="email" value={formData.email} onChange={handleChange} disabled />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Teléfono</label>
+                    <Input
+                      name="telefono"
+                      type="number"
+                      placeholder="Tu teléfono"
+                      value={formData.telefono}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Dirección</label>
+                    <Input
+                      name="direccion"
+                      placeholder="Tu dirección"
+                      value={formData.direccion}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button onClick={handleSave} className="flex-1">
+                      Guardar
+                    </Button>
+                    <Button variant="outline" onClick={() => setEditing(false)} className="flex-1">
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

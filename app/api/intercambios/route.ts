@@ -35,9 +35,15 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { libro_ofrecido_id, libro_recibido_id, usuario_origen_id, usuario_destino_id } = await request.json()
+    const body = await request.json();
+    const { libro_ofrecido_id, libro_recibido_id, usuario_origen_id, usuario_destino_id } = body;
+    console.log("[API Intercambios] Datos recibidos:", body);
+
+    // Log extra para depuración
+    console.log("[API Intercambios] POST - libro_ofrecido_id:", libro_ofrecido_id, "libro_recibido_id:", libro_recibido_id, "usuario_origen_id:", usuario_origen_id, "usuario_destino_id:", usuario_destino_id);
 
     if (!libro_ofrecido_id || !libro_recibido_id || !usuario_origen_id || !usuario_destino_id) {
+      console.warn("[API Intercambios] Campos requeridos incompletos:", body);
       return NextResponse.json({ error: "Campos requeridos incompletos" }, { status: 400 })
     }
 
@@ -53,30 +59,51 @@ export async function POST(request: NextRequest) {
 
     const db = getDb()
     
-    // Verificar propiedad de los libros
+
+    // Verificar propiedad y estado de los libros
     const books = await db`
-      SELECT idLibro, idUsuario 
+      SELECT idLibro, idUsuario, estado 
       FROM libro 
       WHERE idLibro IN (${libro_ofrecido_id}, ${libro_recibido_id})`
+    console.log('[API Intercambios] Libros consultados en BD:', books);
 
     if (!Array.isArray(books) && !Array.isArray((books as any).rows)) {
       return NextResponse.json({ error: "Error al validar libros" }, { status: 500 })
     }
 
-    const bookList = Array.isArray(books) ? books : (books as any).rows
+    const bookListRaw = Array.isArray(books) ? books : (books as any).rows
+    // Normalizar campos para que sean idLibro, idUsuario y estado
+    const bookList = bookListRaw.map((b: any) => ({
+      idLibro: b.idLibro ?? b.idlibro,
+      idUsuario: b.idUsuario ?? b.idusuario,
+      estado: b.estado ?? 'disponible'
+    }))
     if (bookList.length !== 2) {
       return NextResponse.json({ error: "Uno o ambos libros no existen" }, { status: 404 })
     }
 
     const libroOfrecido = bookList.find((b: Book) => b.idLibro === Number(libro_ofrecido_id))
     const libroRecibido = bookList.find((b: Book) => b.idLibro === Number(libro_recibido_id))
-
+    console.log('[API Intercambios] Validando propiedad:', {
+      libroOfrecido,
+      libroRecibido,
+      usuario_origen_id,
+      usuario_destino_id
+    });
     // Validar que cada usuario sea dueño del libro que ofrece
     if (libroOfrecido?.idUsuario !== Number(usuario_origen_id)) {
+      console.warn('[API Intercambios] El usuario no es dueño del libro ofrecido:', {
+        libroOfrecido,
+        usuario_origen_id
+      });
       return NextResponse.json({ error: "No eres dueño del libro que ofreces" }, { status: 403 })
     }
     if (libroRecibido?.idUsuario !== Number(usuario_destino_id)) {
       return NextResponse.json({ error: "El libro solicitado no pertenece al usuario destino" }, { status: 403 })
+    }
+    // Validar que ambos libros estén disponibles
+    if (libroOfrecido?.estado !== 'disponible' || libroRecibido?.estado !== 'disponible') {
+      return NextResponse.json({ error: "Ambos libros deben estar disponibles para intercambiar" }, { status: 409 })
     }
 
     // Insertar intercambio

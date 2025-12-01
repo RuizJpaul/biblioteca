@@ -24,8 +24,8 @@ interface DeliveryLocationsFormProps {
 }
 
 export function DeliveryLocationsForm({ userId }: DeliveryLocationsFormProps) {
-  const [locations, setLocations] = useState<DeliveryLocation[]>([])
-  const [isAddingNew, setIsAddingNew] = useState(false)
+  const [locations, setLocations] = useState<DeliveryLocation[]>([]);
+  const [isAddingNew, setIsAddingNew] = useState(false);
   const [formData, setFormData] = useState({
     nombre: "",
     direccion: "",
@@ -33,8 +33,39 @@ export function DeliveryLocationsForm({ userId }: DeliveryLocationsFormProps) {
     provincia: "",
     codigo_postal: "",
     referencia: "",
-  })
-  const [loading, setLoading] = useState(false)
+  });
+  const [loading, setLoading] = useState(false);
+
+  // Normaliza los datos para aceptar cualquier variante de id
+  const normalizedLocations = locations.map(loc => ({
+    ...loc,
+    idPuntoEntrega: loc.idPuntoEntrega ?? loc.idpuntoentrega ?? loc.id ?? null
+  }));
+
+  // Log para depuración
+  if (typeof window !== "undefined") {
+    console.log("Datos recibidos de la API:", locations);
+    console.log("Datos normalizados:", normalizedLocations);
+  }
+
+  // Filtra duplicados y valores undefined/null en idPuntoEntrega antes de renderizar
+  const validLocations = normalizedLocations
+    .filter(loc => loc.idPuntoEntrega !== undefined && loc.idPuntoEntrega !== null)
+    .filter((loc, idx, arr) => arr.findIndex(l => l.idPuntoEntrega === loc.idPuntoEntrega) === idx);
+
+  useEffect(() => {
+    if (normalizedLocations.length > 0) {
+      const ids = normalizedLocations.map(l => l.idPuntoEntrega);
+      const duplicates = ids.filter((id, idx) => ids.indexOf(id) !== idx);
+      if (duplicates.length > 0) {
+        console.warn("Duplicate idPuntoEntrega values detected in locations:", duplicates);
+      }
+      const invalids = normalizedLocations.filter(l => l.idPuntoEntrega === undefined || l.idPuntoEntrega === null);
+      if (invalids.length > 0) {
+        console.warn("Invalid idPuntoEntrega values detected in locations:", invalids);
+      }
+    }
+  }, [normalizedLocations]);
 
   useEffect(() => {
     if (userId && !isNaN(userId)) {
@@ -105,7 +136,7 @@ export function DeliveryLocationsForm({ userId }: DeliveryLocationsFormProps) {
 
   const handleSetDefault = async (id: number) => {
     try {
-      const location = locations.find((l) => l.idPuntoEntrega === id)!
+      const location = normalizedLocations.find((l) => l.idPuntoEntrega === id)!
       await fetch(`/api/puntos-entrega/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -135,7 +166,7 @@ export function DeliveryLocationsForm({ userId }: DeliveryLocationsFormProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {locations.map((location) => (
+        {validLocations.map((location) => (
           <div key={location.idPuntoEntrega} className="border rounded-lg p-4 space-y-2">
             <div className="flex items-start justify-between">
               <div className="flex-1">

@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useState, useEffect } from "react"
+import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import { ExchangeModal } from "@/components/exchange-modal"
 
@@ -22,9 +23,9 @@ interface Book {
   idUsuario?: number
   estado?: string
 }
-
 export default function BooksPage() {
   const auth = useAuth()
+  const { toast } = useToast()
   const [books, setBooks] = useState<Book[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -206,28 +207,61 @@ export default function BooksPage() {
                     userId={selectedBook.idUsuario || 0}
                     onClose={() => setSelectedBook(null)}
                     onPropose={async (myBookId) => {
+                      const origenId = (auth.user as any)?.idUsuario ?? (auth.user as any)?.idusuario ?? null;
+                      const destinoId = selectedBook.idUsuario ?? null;
+                      const libroRecibidoId = selectedBook.idLibro ?? null;
+                      // Log para depuración
+                      console.log('[Intercambio] Propuesta:', {
+                        libro_ofrecido_id: myBookId,
+                        libro_recibido_id: libroRecibidoId,
+                        usuario_origen_id: origenId,
+                        usuario_destino_id: destinoId,
+                        selectedBook,
+                        authUser: auth.user
+                      });
+                      if (!origenId || !destinoId || !libroRecibidoId || !myBookId) {
+                        toast({
+                          title: "Error al proponer intercambio",
+                          description: "Faltan datos requeridos para la propuesta.",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+                      const datos = {
+                        libro_ofrecido_id: myBookId,
+                        libro_recibido_id: libroRecibidoId,
+                        usuario_origen_id: origenId,
+                        usuario_destino_id: destinoId
+                      };
+                      console.log("[Intercambio] Enviando datos:", datos);
                       try {
                         const response = await fetch("/api/intercambios", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            libro_ofrecido_id: myBookId,
-                            libro_recibido_id: selectedBook.idLibro,
-                            usuario_origen_id: (auth.user as any)?.idUsuario,
-                            usuario_destino_id: selectedBook.idUsuario || 0
-                          })
-                        })
-
+                          body: JSON.stringify(datos)
+                        });
                         if (response.ok) {
-                          alert("¡Intercambio propuesto exitosamente!")
-                          setSelectedBook(null)
+                          toast({
+                            title: "Intercambio propuesto",
+                            description: "Tu propuesta fue enviada exitosamente.",
+                          });
+                          setSelectedBook(null);
                         } else {
-                          const error = await response.json()
-                          alert(error.error || "Error al proponer el intercambio")
+                          const error = await response.json();
+                          console.error("[Intercambio] Error respuesta:", error);
+                          toast({
+                            title: "Error al proponer intercambio",
+                            description: error.error || "Intenta nuevamente.",
+                            variant: "destructive"
+                          });
                         }
                       } catch (error) {
-                        console.error("Error:", error)
-                        alert("Error al proponer el intercambio")
+                        console.error("Error:", error);
+                        toast({
+                          title: "Error al proponer intercambio",
+                          description: "Intenta nuevamente.",
+                          variant: "destructive"
+                        });
                       }
                     }}
                   />
@@ -239,5 +273,5 @@ export default function BooksPage() {
       </main>
       <PublicFooter />
     </div>
-  )
+  );
 }

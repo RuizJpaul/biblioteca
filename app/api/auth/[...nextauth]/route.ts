@@ -1,6 +1,9 @@
+// Asegúrate de instalar next-auth: npm install next-auth
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import type { Session } from "next-auth";
+// Tipos para los parámetros
+type JWTParams = { token: any; account: any; profile?: any };
+type SessionParams = { session: any; token: any };
 
 const handler = NextAuth({
   providers: [
@@ -14,11 +17,11 @@ const handler = NextAuth({
       }
     }),
   ],
-  session: {
+  session: {  
     strategy: "jwt",
   },
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile }: JWTParams) {
       if (account && profile) {
         token.email = profile.email;
         token.name = profile.name;
@@ -36,7 +39,7 @@ const handler = NextAuth({
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: SessionParams) {
       if (!session.user) session.user = {} as any;
       (session.user as any).email = token.email;
       (session.user as any).name = token.name;

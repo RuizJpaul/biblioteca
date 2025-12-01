@@ -41,16 +41,15 @@ export function UserNavbar({ userName }: UserNavbarProps) {
             </Link>
           </div>
 
-          <div className="flex items-center gap-3">
-            {user && (
-              <>
-                {user.image && (
-                  <img src={user.image} alt="avatar" style={{ width: 32, height: 32, borderRadius: "50%" }} />
-                )}
-                <span className="font-medium text-foreground mr-2">{user.name || user.email}</span>
-              </>
-            )}
-            <Button variant="ghost" onClick={handleLogout}>Cerrar sesión</Button>
+          <div className="flex items-center gap-4">
+            <Link href="/user/profile">
+              <Button variant="ghost" size="sm">
+                Perfil
+              </Button>
+            </Link>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              Cerrar Sesión
+            </Button>
           </div>
         </div>
       </div>

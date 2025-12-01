@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { isAdmin } from "@/lib/role"
 import { useSession } from "next-auth/react"
@@ -17,10 +18,10 @@ interface User {
   email: string
   tipoUsuario: string
 }
-
 export default function UserPage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const { toast } = useToast()
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [myBooksCount, setMyBooksCount] = useState<number | null>(null)
@@ -97,6 +98,16 @@ export default function UserPage() {
           if (exchangesRes.ok) {
             const ex = await exchangesRes.json()
             setMyExchangesCount(Array.isArray(ex) ? ex.length : 0)
+            // Notificación si hay intercambios pendientes donde el usuario es destino
+            const pendientes = Array.isArray(ex)
+              ? ex.filter((e) => e.estado === "pendiente" && e.usuario_destino_id === user.idUsuario)
+              : [];
+            if (pendientes.length > 0) {
+              toast({
+                title: "Tienes propuestas de intercambio",
+                description: `Tienes ${pendientes.length} intercambio(s) pendiente(s) por revisar.`,
+              })
+            }
           }
           if (publicStatsRes.ok) {
             const pub = await publicStatsRes.json()
@@ -111,7 +122,7 @@ export default function UserPage() {
     return () => {
       mounted = false
     }
-  }, [user])
+  }, [user, toast])
 
   if (blocked) {
     return <div />
@@ -134,8 +145,10 @@ export default function UserPage() {
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground mb-2">Mis Libros</p>
                 <p className="text-3xl font-bold text-primary mb-4">{myBooksCount ?? "—"}</p>
-                <Link href="/user/my-books">
-                  <Button className="w-full">Ver Mis Libros</Button>
+                <Link href="/user/my-books" className="w-full" passHref>
+                  <Button className="w-full" asChild>
+                    <span>Ver Mis Libros</span>
+                  </Button>
                 </Link>
               </CardContent>
             </Card>
@@ -144,9 +157,11 @@ export default function UserPage() {
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground mb-2">Intercambios</p>
                 <p className="text-3xl font-bold text-accent mb-4">{myExchangesCount ?? "—"}</p>
-                <Button variant="outline" className="w-full bg-transparent">
-                  Ver Historial
-                </Button>
+                <Link href="/user/exchanges" className="w-full" passHref>
+                  <Button variant="outline" className="w-full bg-transparent" asChild>
+                    <span>Ver Historial</span>
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -154,9 +169,9 @@ export default function UserPage() {
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground mb-2">Libros Disponibles</p>
                 <p className="text-3xl font-bold mb-4">{totalBooks ?? "—"}</p>
-                <Link href="/user/books">
-                  <Button variant="outline" className="w-full bg-transparent">
-                    Explorar
+                <Link href="/user/books" className="w-full" passHref>
+                  <Button variant="outline" className="w-full bg-transparent" asChild>
+                    <span>Explorar</span>
                   </Button>
                 </Link>
               </CardContent>
@@ -166,43 +181,13 @@ export default function UserPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             <Card>
               <CardContent className="pt-6">
-                <h2 className="text-2xl font-bold mb-4">Guía Rápida</h2>
-                <div className="space-y-3">
-                  {[
-                    { title: "Agregar un Libro", desc: "Sube tus libros a la plataforma" },
-                    { title: "Buscar Libros", desc: "Explora el catálogo completo" },
-                    { title: "Proponer Intercambio", desc: "Conecta con otros lectores" },
-                  ].map((item, i) => (
-                    <div key={i} className="pb-3 border-b border-border last:border-0">
-                      <p className="font-semibold text-sm">{item.title}</p>
-                      <p className="text-sm text-muted-foreground">{item.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <h2 className="text-2xl font-bold mb-4">Recomendaciones</h2>
-                <div className="space-y-3">
-                  {[
-                    { book: "Dune", user: "María" },
-                    { book: "El Nombre del Viento", user: "Carlos" },
-                    { book: "Proyecto Hail Mary", user: "Ana" },
-                  ].map((item, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between pb-3 border-b border-border last:border-0"
-                    >
-                      <div>
-                        <p className="font-semibold text-sm">{item.book}</p>
-                        <p className="text-xs text-muted-foreground">De: {item.user}</p>
-                      </div>
-                      <Button size="sm">Ver</Button>
-                    </div>
-                  ))}
-                </div>
+                <h2 className="text-2xl font-bold mb-4">Consultar Puntos de Entrega</h2>
+                <p className="text-muted-foreground mb-4">Visualiza los puntos de entrega disponibles para tus intercambios y libros.</p>
+                <Link href="/user/delivery-locations" className="w-full" passHref>
+                  <Button className="w-full" asChild>
+                    <span>Ver Puntos de Entrega</span>
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </div>

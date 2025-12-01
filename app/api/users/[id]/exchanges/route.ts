@@ -7,7 +7,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const sql = getDb()
     const userId = Number.parseInt(id)
     const exchanges = await sql`
-      SELECT i.* FROM intercambio i 
+      SELECT i.*, lo.titulo as libro_ofrecido_titulo, lr.titulo as libro_recibido_titulo
+      FROM intercambio i
+      JOIN libro lo ON i.libro_ofrecido_id = lo.idLibro
+      JOIN libro lr ON i.libro_recibido_id = lr.idLibro
       WHERE i.usuario_origen_id = ${userId} OR i.usuario_destino_id = ${userId}
       ORDER BY i.fecha DESC
     `

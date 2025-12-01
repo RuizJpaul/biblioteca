@@ -176,12 +176,25 @@ export default function UserBooksPage() {
                         <span className="text-5xl"></span>
                       )}
 
-                      {isOwn && (
-                        <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
-                          <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
-                            Mi libro
+                      {book.estado === 'intercambiado' ? (
+                        <div className="absolute inset-0 bg-muted/70 flex flex-col items-center justify-center">
+                          <span className="bg-muted text-primary px-3 py-1 rounded-full text-sm font-medium border border-primary mb-2">
+                            Intercambiado
                           </span>
+                          {isOwn && (
+                            <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium mt-2">
+                              Mi libro
+                            </span>
+                          )}
                         </div>
+                      ) : (
+                        isOwn && (
+                          <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
+                            <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
+                              Mi libro
+                            </span>
+                          </div>
+                        )
                       )}
                     </div>
                     <CardContent className="pt-4">
@@ -191,7 +204,7 @@ export default function UserBooksPage() {
                       <p className="text-xs text-muted-foreground mt-2">Por: {book.nombre || book.usuario_nombre || "Usuario desconocido"}</p>
                       {book.anio && <p className="text-xs text-muted-foreground">Año: {book.anio}</p>}
                       {!isOwn && (
-                        <Button className="w-full mt-4" onClick={() => setSelectedBook(book)}>
+                        <Button className="w-full mt-4" onClick={() => setSelectedBook(book)} disabled={book.estado === 'intercambiado'}>
                           Proponer Intercambio
                         </Button>
                       )}
